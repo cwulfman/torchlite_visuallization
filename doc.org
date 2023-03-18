@@ -1,0 +1,52 @@
+#+title: Visualizations and Widgets
+
+* Overview
+This document re-centers the work on Torchlite widgets
+
+* What is a Visualization?
+Let us begin with basic definitions:
+
+#+begin_center
+A visualization is a the realization of a projection of categorical variables onto visual affordances
+#+end_center
+
+*** Categorical Variables
+See [[https://en.wikipedia.org/wiki/Categorical_variable][the Wikipedia entry on categorical variable]], from which this summary is largely derived.
+
+In statistics, a /categorical variable/ (or /qualitative variable/) is a variable that can take on a number of possible values (usually limited or fixed).  They are used to group data elements into /nominal categories/ on the basis of some /qualitative property/.
+
+The Torchlite Extracted Features schema is largely a specification of categorical variables: various bibliographic categories (e.g. pubDate, pubPlace, genre, language, etc.), as well as many of the extracted features themselves: pageCount, wordCount, etc.
+
+The EF data can be used to derive additional categories: e.g., the authorized name of a creator can be used to look up a record in a database, which might contain variables like date of birth, date of death, places associated with the person (birthplace, etc).
+
+*** Visual Affordances
+These are qualities like spatial location, color, size, appearance (border, shading, etc.) that can be used to distinguish among values in a categorical variable.
+
+*** Projection
+A projection is an association of categorical variables with visual affordances. For example, a database containing weight measurements over time might be projected onto a two-dimensional graph by associating weight with the Y axis and date with the X axis.
+
+* What is a Widget?
+A widget is an agent that creates visualizations by rendering projections
+onto a visible surface.
+
+* Designing Widgets
+A widget has two components:
+- a projector
+- a renderer
+
+These components are separable and can be mixed and matched.  A projector can be tuned to generate projections by creating a data frame and associating index values with affordances.  The resulting projection can e serialized, or it can be transmitted to any renderer whose input schema matches the index.
+
+For example, a projector might use our weight database to fill a data frame whose indices are weight and date, then generate a projection, a data structure with two parts: the dataframe and the mapping of index values to affordances.  That projection could then be passed to a number of different renderers: a line chart renderer; a bar chart renderer, etc.
+
+* Torchlite
+Torchlite maintains libraries of projectors and renderers, which may be snapped together to create a widget.
+
+** Renderers
+React components; Seaborn modules; image generators (which can generate images that can be saved out or displayed in a Jupyter Notebook).
+
+** Projectors
+Python classes that can be given a workset and generate a projection of a particular kind.
+
+If the projection requires calculated data (like cleaned or filtered token data; data derived from knowledge bases; etc.), the dataframe is passed to a /transformer/, which does that work and returns a new dataframe to the projector.
+
+Projectors are themselves modular; a generator may be paired with different transformers (e.g., a Wikidata transformer, which uses Wikidata as its data source, or a transformer that uses a bespoke gazetteer)
