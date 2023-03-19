@@ -1,4 +1,4 @@
-#+title: Visualizations and Widgets
+#+title: Torchlite Visualizations and Widgets
 
 * Overview
 This document clarifies the work on Torchlite widgets by describing the notions behind their design
@@ -36,7 +36,7 @@ These components are separable and can be mixed and matched: a projector can be 
 
 For example, a projector might use our weight database to fill a data frame whose indices are weight and date, then generate a projection, a data structure with two parts: the dataframe and the mapping of index values to affordances.  That projection could then be passed to a number of different renderers: a line chart renderer; a bar chart renderer, etc.
 
-* Torchlite
+* Torchlite's Implementation
 The following section describes the way in which these notions are being used to design and implement Torchlite's widgets.
 
 As discussed elsewhere, Torchlite is a classic three-tier application, with a graphical user interface (GUI) that runs in a web browser (the "presentation layer"); a back-end application that does the work of the application (the "business layer" or "application layer"); and one or more databases that store and retrieve data (the "data layer").  A Torchlite user chooses a Work Set compiled from volume-level data in HTRC's Extracted Features database, as well as a set of Widgets that display aspects of the workset, usually through graphical visualization.
@@ -44,7 +44,7 @@ As discussed elsewhere, Torchlite is a classic three-tier application, with a gr
 ** Torchlite's Widgets
 Torchlite's widgets are modular software components:
 
-- Renderers :: React components, Seaborn modules, and image generators (which can generate images that can be saved out or displayed in a Jupyter Notebook).
+- Renderers :: React components, [[https://seaborn.pydata.org/][Seaborn modules]], and image generators (which can generate images that can be saved out or displayed in a Jupyter Notebook).
   
 - Projectors :: Python classes that can be given a workset and generate a projection of a particular kind.
 
@@ -56,22 +56,52 @@ Torchlite maintains libraries of projectors, transformers, and renderers, which 
 
 *** An Example Widget: A Publication Timeline
 Torchlite users might want to use widgets to understand the publication history of worksets.  What are the earliest and latest publications in the workset?  When were most of the texts published? Where were they published, and in what languages?
+Publication date, place, and language are categorical variables in an Extracted Features workset; they can be used to build widgets that visualize publication data in various ways.
 
-Publication date (pubDate), place, (pubPlace) and language (language) are categorical variables that can be extracted from an Extracted Features workset; they can be used to build widgets that visualize publication data in various ways.  Quantitative domains, such as science, economics, and business analytics, have come up with a variety of techniques for visualizing information, and Digital Humanities borrows heavily from them; users will want to be able to choose the visualization that best communicates the information to them or to their audience.
+Quantitative domains, such as science, economics, and business analytics, have come up with a variety of techniques for visualizing information, and Digital Humanities borrows heavily from them; users will want to be able to choose the visualization that best communicates the information to them or to their audience.
 
-The most common visualizations of time series are histograms: two-dimensional graphs with time plotted sequentially on one axis and quantitative values plotted on the other.[fn:1]  Rendering a histogram that represents the distribution of publication frequency over time requires two series: a series of dates and a series of counts: the number of items published on that date.  A grouping of series is called a table or a data frame.  Plotting frequency over time is one of the most common uses of histograms.  Torchlite is committed to using the [[https://d3js.org/][D3.js JavaScript library]]; [[https://observablehq.com][Observablehq]] contains over [[https://observablehq.com/search?query=time+series+chart&onlyOwner=false][3,000 D3.js implementations of time-series charts]].
+The most common visualizations of time series are /histograms:/ two-dimensional graphs with time plotted sequentially on one axis and quantitative values plotted on the other.  Rendering a histogram that represents the distribution of publication frequency over time requires two /series:/ a series of dates and a series of counts: the number of items published on that date.  A grouping of series is called a /table/ or /data frame/.
 
-These are /Renderers/; they are the code that displays data.  But these displays require more than just a table of htids and pubDates. Time-series visualization entails determining /bin size/: the granularity of the time-series axis. Is it centuries? Decades? Years?  Months?  Days?  Torchlite uses the EF API to obtain workset data; the EF API returns pubDate metadata as an integer representing a year (e.g., 1947).  That means the /lowest granularity/ of publication dates in the EF data is the year; our timeline cannot plot dates of publication by months or days, because the data does not contain that information. But /year/ may be too fine-grained for a useful visualization; a user may want to use a granularity of /decade/ or even /century/.
+Plotting frequency over time is one of the most common uses of histograms.  Torchlite is committed to using the [[https://d3js.org/][D3.js JavaScript library]]; [[https://observablehq.com][Observablehq]] contains over [[https://observablehq.com/search?query=time+series+chart&onlyOwner=false][3,000 D3.js implementations of time-series charts]].  These are /Renderers/; they are the code that displays data.  But these displays require more than just a table of htids and pubDates. Time-series visualization entails determining /bin size/: the granularity of the time-series axis. Is it centuries? Decades? Years?  Months?  Days?  Torchlite uses the EF API to obtain workset data; the EF API returns pubDate metadata as an integer representing a year (e.g., 1947).  That means the /lowest granularity/ of publication dates in the EF data is the year; our timeline cannot plot dates of publication by months or days, because the data does not contain that information. But /year/ may be too fine-grained for a useful visualization; a user may want to use a granularity of /decade/ or even /century/.
 
-That data is inherent in the raw EF data value, but it must be computed. Where is the bin size determined? And where is the granularity calculated?  These are design decisions. There is, in theory, no reason why Torchlite's timeline renderer couldn't take as input a table of htids and pubDates and do all the necessary calculations itself (that is, in JavaScript, in the browser): converting the raw data into a table of years and counts and plotting that.  What about bin size?  The renderer might, for example, display a set of radio buttons that enable the user to choose between year, decade, and century; when the user changes granularity, the renderer re-calculates the data, first converting each date into, say, a decade or a century, and then reconsolidating and re-displaying.
+That data is inherent in the raw EF data value, but it must be computed. Where is the bin size determined? And where is the granularity calculated?  These are design decisions. There is, in theory, no reason why Torchlite's timeline renderer couldn't take as input a table of htids and pubDates and do all the necessary calculations itself (in JavaScript, in the browser): converting the raw data into a table of years and counts and plotting that.  What about bin size?  The renderer might, for example, display a set of radio buttons that enable the user to choose between year, decade, and century; when the user changes granularity, the renderer re-calculates the data, first converting each date into, say, a decade or a century, and then reconsolidating and re-displaying.
 
-These calculations are cheap and simple, so it makes sense for them to be made by the Renderer. All the Renderer needs is a projector that gets the publication data from the workset and converts it into two-column table (an array of (htid, pubDate) tuples).  For something more complex, though, it might make sense for calculations to be done by a Transformer, which converts a 4-digit integer into a tuple of year, decade, and century and returns a four-column table (an array of (htid, year, decade, century) tuples).
+
+These calculations are cheap and simple, so it makes sense for them to be made by the Renderer. All the Renderer needs is a Projector that gets the publication data from the workset and converts it into two-column table (an array of (htid, pubDate) tuples).  For something more complex, though, it might make sense for calculations to be done by the Projector, using a Transformer, that converts a 4-digit integer into a tuple of year, decade, and century and returns a four-column table (an array of (htid, year, decade, century) tuples).
 
 **** A More Sophisticated Timeline Widget
+The visualization we have just described is a simple histogram: frequency of volume publication over time.  But we have other categorical values for volumes: place of publication, for example, or the primary language of the text.  Modern data science has produced a rich variety of visualizations that use multiple affordances to render graphs, beyond the simple two-dimensional chart.
 
+One of these is the [[https://observablehq.com/@d3/beeswarm-mirrored][mirrored beeswarm]] depicted in the Torchlite wireframe.  This visualization uses dot /placement/ along the x axis to show time and dot /color/ to interpret another categorical variable (unspecified in the wireframe).  For purposes of illustration, let us say that Torchlite's Timeline Widget (or one of them) uses a beeswarm to depict two categorical variables: date of publication in 2-dimensional space, as before, and place of publication using color. It uses dot size to display the relative frequency of publication in any place (the more volumes published in a place, the larger the dot). This is a much more informative visualization, and it seems to  require only one more piece of information: the pubPlace.
 
+Looks may be deceiving, however.  What is the granularity of the pubPlace variable in the EF database?  If it is uniform (only countries), then pubPlace can be treated like the date strings: matched and sorted alphabetically.  But what if the pubPlace data is not uniform?  What if some volumes are published in "England" while others are published in "Washington, DC"?  For a our beeswarm to be legible, the granularity of the dots must be the same: the pubPlace "Washington, DC" must be resolved to "United States".
 
+HTRC's Extracted Features data is wonderfully rich: its attributes and their values are /linked data/.  For example:
 
-* Footnotes
+#+begin_example
+  "pubPlace": {
+     "id": "http://id.loc.gov/vocabulary/countries/enk",
+     "type": "http://id.loc.gov/ontologies/bibframe/Place",
+     "name": "England"
+   }
+#+end_example
 
-[fn:1] For a quick review of histograms, see https://www.data-to-viz.com/graph/histogram.html.  
+or
+
+#+begin_example
+  "pubPlace": {
+    "id": "http://id.loc.gov/vocabulary/countries/dcu",
+    "type": "http://id.loc.gov/ontologies/bibframe/Place",
+    "name": "District of Columbia"
+  }
+#+end_example
+
+Because the ids are URLs, a program can use them to retrieve records from the Library of Congress that can be used to determine that "District of Columbia" is in the United States.  But that resolution is not straightforward; it might take a variety of calls to different knowledge sources on the web, comparison with internal gazetteers, and so on.
+
+This work clearly should not happen in the browser at display time.  It is the job of a Projector to take those pieces of linked data, resolve them to the same granularity, and then transmit them to the Renderer as simple strings that can be displayed.  The Projector might use one of several Transformers to do the resolution: one might restrict itself to the Library of Congress, while another might use Wikidata and another GeoNames.
+
+This is why it is not enough to write a React component to make a beeswarm graph from Extracted Features data.  There is a clear separation of concerns in this widget: the Projector, running on a server, making its way through linked data, and the Renderer, which takes a simple three-tuple data stream and does all the complex D3-related work to render the timeline, the dots, the colors, the sizes, and so forth.
+
+* Conclusion
+The modular nature of these widgets has numerous advantages, some of which we have already seen. One other that we have not discussed: the Jupyter Notebook use case.  With this architecture, Projectors may be loaded into a Jupyter Notebook and played with, then connected to a Jupyter-specific Renderer that knows how to render graphics in a Jupyter Notebook.
+
