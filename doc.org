@@ -1,7 +1,7 @@
 #+title: Torchlite Visualizations and Widgets
 
 * Overview
-This document clarifies the work on Torchlite widgets by describing the notions behind their design
+This document clarifies the work on Torchlite widgets by describing the notions behind their design.
 
 * What is a Visualization?
 Let us begin with basic definitions:
@@ -34,12 +34,20 @@ projections onto a visible surface.  A widget has two components:
 
 These components are separable and can be mixed and matched: a projector can be tuned to generate projections by creating a data frame and associating index values with affordances.  The resulting projection can be serialized (expressed as data that can be stored and reconstituted), or it can be transmitted to any renderer whose input schema matches the index.
 
+#+CAPTION: Architecture of a Torchlite Widget
+[[file:./widget.png]]
+
 For example, a projector might use our weight database to fill a data frame whose indices are weight and date, then generate a projection, a data structure with two parts: the dataframe and the mapping of index values to affordances.  That projection could then be passed to a number of different renderers: a line chart renderer; a bar chart renderer, etc.
 
 * Torchlite's Implementation
 The following section describes the way in which these notions are being used to design and implement Torchlite's widgets.
 
-As discussed elsewhere, Torchlite is a classic three-tier application, with a graphical user interface (GUI) that runs in a web browser (the "presentation layer"); a back-end application that does the work of the application (the "business layer" or "application layer"); and one or more databases that store and retrieve data (the "data layer").  A Torchlite user chooses a Work Set compiled from volume-level data in HTRC's Extracted Features database, as well as a set of Widgets that display aspects of the workset, usually through graphical visualization.
+As discussed elsewhere, Torchlite is a classic three-tier application, with a graphical user interface (GUI) that runs in a web browser (the "presentation layer"); a back-end application that does the work of the application (the "business layer" or "application layer"); and one or more databases that store and retrieve data (the "data layer").
+
+#+CAPTION Torchlite three-tiered architecture
+[[file:./system_layers.png]]
+
+A Torchlite user chooses a Work Set compiled from volume-level data in HTRC's Extracted Features database, as well as a set of Widgets that display aspects of the workset, usually through graphical visualization.
 
 ** Torchlite's Widgets
 Torchlite's widgets are modular software components:
